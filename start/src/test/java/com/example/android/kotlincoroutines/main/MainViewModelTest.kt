@@ -20,6 +20,8 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.android.kotlincoroutines.fakes.MainNetworkFake
 import com.example.android.kotlincoroutines.fakes.TitleDaoFake
 import com.example.android.kotlincoroutines.main.utils.MainCoroutineScopeRule
+import com.example.android.kotlincoroutines.main.utils.getValueForTest
+import com.google.common.truth.Truth
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +54,10 @@ class MainViewModelTest {
 
     @Test
     fun whenMainClicked_updatesTaps() {
+        subject.onMainViewClicked() //아까 생성한 코루틴 실행
+        Truth.assertThat(subject.taps.getValueForTest()).isEqualTo("0 taps")
+        coroutineScope.advanceTimeBy(1000)
+        Truth.assertThat(subject.taps.getValueForTest()).isEqualTo("1 taps")
         // TODO: Write this
     }
 }
