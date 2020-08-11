@@ -50,7 +50,7 @@ interface TitleDao {
  * TitleDatabase provides a reference to the dao to repositories
  */
 @Database(entities = [Title::class], version = 1, exportSchema = false)
-abstract class TitleDatabase : RoomDatabase() {
+abstract class TitleDatabase : RoomDatabase() { //room database를 사용해서 타이틀을 저장하고 불러온다
     abstract val titleDao: TitleDao
 }
 
