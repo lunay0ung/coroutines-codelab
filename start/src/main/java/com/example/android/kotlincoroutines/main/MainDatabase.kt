@@ -34,13 +34,17 @@ import androidx.room.RoomDatabase
 @Entity
 data class Title constructor(val title: String, @PrimaryKey val id: Int = 0)
 
+
 /***
  * Very small database that will hold one title
  */
 @Dao
 interface TitleDao {
+    //insertTitles란 insert 쿼리에 suspend 변경자를 덧붙임으로써, Room은 해당 쿼리를 main-safe하게 만들고
+    //자동으로 백그라운드 스레드에서 실행시킨다.
+    //하지만 동시에 해당 쿼리를 오로지 코루틴 내부에서 호출해야하게 된다.
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertTitle(title: Title)
+    suspend fun insertTitle(title: Title)
 
     @get:Query("select * from Title where id = 0")
     val titleLiveData: LiveData<Title?>

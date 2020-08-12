@@ -70,21 +70,20 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
         // -> 콜백버전의 경우에는 BACKGROUND executor service 내부 스레드 상의 콜백을 호출했다
         //2) caller는 이 함수에 callback을 전달할 필요가 없다. 결과값이나 에러를 받기 위해 suspend / resume될 뿐이다.
 
-        withContext(Dispatchers.IO) {
-           val result = try {
-                network.fetchNextTitle().execute()
-           } catch (cause: Throwable) {
-               throw TitleRefreshError("unable to refresh title", cause)
-           }
-
-           if (result.isSuccessful) {
-               // Save it to database
-               titleDao.insertTitle(Title(result.body()!!))
-           } else {
-               // If it's not successful, inform the callback of the error
-               throw TitleRefreshError("Unable to refresh title", null)
-           }
-       }
+        try {
+            // Make network request using a blocking call
+            //suspend 함수 안에서 레트로핏은 백그라운드 스레드 상에서 네트워크 리퀘스트를 실행하고, 호출이 완료되면 코루틴을 재시작할 수 있다
+            //더 좋은 것은, withContext 구문을 제거해도 된다는 것이다.
+            //룸과 레트로핏 모두 main-safe한 서스펜딩 함수를 제공하기 때문에, 이 비동기 작업을 Dispatcher.Main 상에서 돌려도 안전하다.
+            //즉, main-safe한 suspending function을 호출하기 위해 withContext를 사용할 필요가 없다.
+            //전통적으로는 suspend function이 main-safe하게 쓰여졌는지 확인이 필요하다.
+            //그래야 Dispatchers.Main을 포함한 어떤 dispatcher에서 호출하더라도 안전하기 때문이다.
+            val result = network.fetchNextTitle()
+            titleDao.insertTitle(Title(result))
+        } catch (cause: Throwable) {
+            // If anything throws an exception, inform the caller
+            throw TitleRefreshError("Unable to refresh title", cause)
+        }
     }
 
 
@@ -94,6 +93,8 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
      * This method does not return the new title. Use [TitleRepository.title] to observe
      * the current tile.
      */
+
+    /*
     fun refreshTitleWithCallbacks(titleRefreshCallback: TitleRefreshCallback) {
         // This request will be run on a background thread by retrofit
         BACKGROUND.submit { //작업을 위해 BACKGROUND 스레드로 switch한다
@@ -120,6 +121,9 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
             }
         }
     }
+    */
+
+
 }
 
 /**
