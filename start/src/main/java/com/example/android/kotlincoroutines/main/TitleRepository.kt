@@ -22,6 +22,7 @@ import com.example.android.kotlincoroutines.util.BACKGROUND
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import okhttp3.Dispatcher
 
 /**
@@ -78,7 +79,12 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
             //즉, main-safe한 suspending function을 호출하기 위해 withContext를 사용할 필요가 없다.
             //전통적으로는 suspend function이 main-safe하게 쓰여졌는지 확인이 필요하다.
             //그래야 Dispatchers.Main을 포함한 어떤 dispatcher에서 호출하더라도 안전하기 때문이다.
-            val result = network.fetchNextTitle()
+            //val result = network.fetchNextTitle()
+
+            //5초의 타임아웃 추가
+            val result = withTimeout(5_000) {
+                network.fetchNextTitle()
+            }
             titleDao.insertTitle(Title(result))
         } catch (cause: Throwable) {
             // If anything throws an exception, inform the caller
