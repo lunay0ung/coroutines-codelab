@@ -139,7 +139,7 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
 
     suspend lambda를 만들기 위해서 suspend 키워드로 시작하고
     화살표와 Unit이라는 리턴타입을 통해 완성한다.
-    보통은 자신만의 suspend lambda를 선언할 필요가 없지만 이번처럼 반복되는 로직을 캡슐화하기 위해서는 유용할 수 있다. 
+    보통은 자신만의 suspend lambda를 선언할 필요가 없지만 이번처럼 반복되는 로직을 캡슐화하기 위해서는 유용할 수 있다.
      */
     private fun launchDataLoad(block: suspend() -> Unit) : Job {
         return viewModelScope.launch {
