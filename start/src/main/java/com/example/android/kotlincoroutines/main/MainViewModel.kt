@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.android.kotlincoroutines.util.BACKGROUND
 import com.example.android.kotlincoroutines.util.singleArgViewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -131,7 +132,46 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
         _snackBar.value = null
     }
 
-    fun refreshTitle(){
+    /*
+
+    // suspend lambda
+    block: suspend () -> Unit
+
+    suspend lambda를 만들기 위해서 suspend 키워드로 시작하고
+    화살표와 Unit이라는 리턴타입을 통해 완성한다.
+    보통은 자신만의 suspend lambda를 선언할 필요가 없지만 이번처럼 반복되는 로직을 캡슐화하기 위해서는 유용할 수 있다. 
+     */
+    private fun launchDataLoad(block: suspend() -> Unit) : Job {
+        return viewModelScope.launch {
+            try {
+                _spinner.value = true
+                block()
+            } catch (error: TitleRefreshError) {
+                _snackBar.value = error.message
+            } finally {
+                _spinner.value = false
+            }
+        }
+    }
+
+    //*higher order function: Higher-Order Functions은 함수를 변수로 넘겨주거나, 이를 반환하는 것
+    /*
+    스피너를 로딩하거나 에러를 보여주는 로직을 추출함으로써
+    데이터를 로드하기 위한 진짜 코드를 단순화할 수 있게 됐다.
+    실제 데이터 소스와 목적지는 매번 특정되어야 하는 반면
+    스피너나 에러를 보여주는 건 어떤 데이터를 로드할 때에도 일반화해서 사용하기 쉽다.
+
+    이 abstraction을 위해 launchDataLoad는 suspend lambda로 된 매개 블럭을 사용한다.
+    suspend lambda는 suspend function을 호출하도록 한다.
+    That's how Kotlin implements the coroutine builders launch and runBlocking we've been using in this codelab.
+     */
+    fun refreshTitle() {
+        launchDataLoad {
+            repository.refreshTitle()
+        }
+    }
+
+    fun refreshTitle2(){
 
         /*
         Even though refreshTitle will make a network request and database query it can use coroutines to expose a main-safe interface.
